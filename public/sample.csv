@@ -1,0 +1,7 @@
+sgf,type,question,options,correctAnswer
+"(;SZ[19]AB[pd][dd][jd]AW[pp][dp][jp]LB[pd:A][dd:B][jd:C][pp:D])",TEXTCHOICE,请看棋盘上的标记，黑棋应该选择哪个位置？,"[""A. A位"",""B. B位"",""C. C位"",""D. D位""]",A
+"(;SZ[19]AB[cd][de][ef][fe][ed][dc]AW[cf][df][dg][dh][di][eg]LB[cf:A][df:B][dg:C][dh:D])",TEXTCHOICE,关于死活题，请看标记，黑先如何杀白？,"[""A. A位点入"",""B. B位缩小眼位"",""C. C位扑"",""D. D位扳""]",C
+"(;SZ[9]AB[aa][ac][ae][ca][cc][ce][ea][ec][ee]AW[ab][ad][ba][bc][bd][be][da][db][dc][dd][de][eb][ed]LB[ab:A][bc:B][dc:C][ed:D])",TEXTCHOICE,9路棋盘题目，请看标记，这是什么形状？,"[""A. A位"",""B. B位"",""C. C位"",""D. D位""]",B
+"(;SZ[19]AB[rq][pp][qn][nq][qf][nc]AW[qq][pq][pn][np][qp][qc]LB[rq:A][pp:B][qn:C][nq:D])",TEXTCHOICE,这是一道布局题目，请看棋盘标记，黑棋下一手应该占哪里？,"[""A. A位右上角星位"",""B. B位左下角小目"",""C. C位上边大场"",""D. D位右边拆边""]",B
+"(;SZ[13]AB[cg][ch][ci][dj][dk]AW[cf][df][dg][dh][di][ej][ek]LB[cg:A][ch:B][ci:C][dj:D])",TEXTCHOICE,中盘战斗，请看标记，黑棋如何应对？,"[""A. A位跳出"",""B. B位尖出"",""C. C位飞封"",""D. D位靠压""]",D
+"(;SZ[19]AB[dp][dq][dr][ep][eq][er]AW[fq][fr][gr][gq][gp]LB[dp:A][dq:B][dr:C][ep:D])",TEXTCHOICE,选择题，请看棋盘标记，哪手是最佳？,"[""A. A"",""B. B"",""C. C"",""D. D""]",C
