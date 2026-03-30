@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import { QuizQuestion, ParsedQuestion } from '../types';
+import type { ParsedQuestion } from '../types';
 
 export interface RawCSVRow {
   sgf: string;
@@ -13,7 +13,6 @@ export const parseCSV = (csvContent: string): ParsedQuestion[] => {
   const results = Papa.parse<RawCSVRow>(csvContent, {
     header: true,
     skipEmptyLines: true,
-    trimHeaders: true,
   });
 
   if (results.errors.length > 0) {
@@ -21,7 +20,7 @@ export const parseCSV = (csvContent: string): ParsedQuestion[] => {
     throw new Error('CSV解析错误: ' + results.errors[0].message);
   }
 
-  return results.data.map((row, index) => {
+  return results.data.map((row: RawCSVRow, index: number) => {
     const options = parseOptions(row.options);
     const correctAnswerIndex = parseCorrectAnswer(row.correctAnswer, options.length);
 

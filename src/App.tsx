@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Upload, FileText, Trophy, Heart, X } from 'lucide-react'
+import { Upload, FileText, Trophy } from 'lucide-react'
 import { ParsedQuestion, ProblemState } from './types'
 import { parseCSV, generateSampleCSV } from './lib/csvParser'
 import { Header } from './components/Header'

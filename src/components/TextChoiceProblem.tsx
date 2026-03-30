@@ -4,8 +4,9 @@ import { FC, useState, useMemo, useEffect } from 'react'
 import Board from '@sabaki/go-board'
 import Sgf from '@sabaki/sgf'
 import Goban from './Goban'
+import type { ProblemState, TextChoiceProblemProps, TextChoiceOption } from '../types'
 
-const cleanSgf = (sgf) => {
+const cleanSgf = (sgf: string): string => {
   if (!sgf) return sgf
   let cleaned = sgf.trim()
   if (!cleaned.startsWith('(')) {
@@ -17,16 +18,16 @@ const cleanSgf = (sgf) => {
   return cleaned
 }
 
-const TextChoiceProblem = ({
+const TextChoiceProblem: FC<TextChoiceProblemProps> = ({
   solveState = 'pending',
   initSgf,
   question,
   options,
   onSelect,
-  onStateChange
+  onStateChange: _onStateChange,
 }) => {
-  const [problemState, setProblemState] = useState(solveState)
-  const [selectedOption, setSelectedOption] = useState(null)
+  const [problemState, setProblemState] = useState<ProblemState>(solveState)
+  const [selectedOption, setSelectedOption] = useState<number | null>(null)
 
   const { initialBoardState, markerMap, boardSize } = useMemo(() => {
     try {
@@ -36,20 +37,20 @@ const TextChoiceProblem = ({
       const rootData = rootNode.data
       const SZ = Number(rootData['SZ']?.[0]) || 19
 
-      const createEmptyBoard = (size) =>
+      const createEmptyBoard = (size: number) =>
         Array(size).fill(null).map(() => Array(size).fill(0))
 
       let board = new Board(createEmptyBoard(SZ))
       let lastNode = rootNode
 
-      let currentNode = rootNode
+      let currentNode: any = rootNode
       while (currentNode) {
         const nodeData = currentNode.data
         lastNode = currentNode
 
         if (nodeData['AB']) {
           const AB = Array.isArray(nodeData['AB']) ? nodeData['AB'] : [nodeData['AB']]
-          AB.forEach(coord => {
+          AB.forEach((coord: string) => {
             const x = coord.charCodeAt(0) - 97
             const y = coord.charCodeAt(1) - 97
             if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
@@ -60,7 +61,7 @@ const TextChoiceProblem = ({
 
         if (nodeData['AW']) {
           const AW = Array.isArray(nodeData['AW']) ? nodeData['AW'] : [nodeData['AW']]
-          AW.forEach(coord => {
+          AW.forEach((coord: string) => {
             const x = coord.charCodeAt(0) - 97
             const y = coord.charCodeAt(1) - 97
             if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
@@ -97,7 +98,7 @@ const TextChoiceProblem = ({
       const LB = lastNode.data['LB'] || []
       const markerMap = Array(SZ).fill(null).map(() => Array(SZ).fill(null))
       if (Array.isArray(LB)) {
-        LB.forEach((label) => {
+        LB.forEach((label: string) => {
           const [coord, text] = label.split(':')
           const x = coord.charCodeAt(0) - 97
           const y = coord.charCodeAt(1) - 97
@@ -116,7 +117,7 @@ const TextChoiceProblem = ({
       console.error('SGF解析错误:', error)
       console.error('问题SGF:', initSgf)
       const SZ = 19
-      const createEmptyBoard = (size) =>
+      const createEmptyBoard = (size: number) =>
         Array(size).fill(null).map(() => Array(size).fill(0))
       return {
         initialBoardState: createEmptyBoard(SZ),
@@ -137,7 +138,7 @@ const TextChoiceProblem = ({
     setMarkerState(markerMap)
   }, [initialBoardState, markerMap])
 
-  const handleOptionClick = (optionId) => {
+  const handleOptionClick = (optionId: number) => {
     if (problemState !== 'pending') return
     setSelectedOption(optionId)
     onSelect?.(optionId)
@@ -172,7 +173,7 @@ const TextChoiceProblem = ({
         </div>
 
         <div className="w-full space-y-3">
-          {options.map((option) => (
+          {options.map((option: TextChoiceOption) => (
             <button
               key={option.id}
               onClick={() => handleOptionClick(option.id)}
