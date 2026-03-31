@@ -85,10 +85,20 @@ function App() {
     setTotalPoints(0)
   }
 
+  // 计算套题生命值：最低5，题目数/2向上取整，最大10
+  const calculateSuchengHearts = (questionCount: number): number => {
+    const hearts = Math.ceil(questionCount / 2)
+    return Math.min(Math.max(hearts, 5), 10)
+  }
+
   const resetSuchengQuiz = () => {
     setSuchengCurrentIndex(0)
     setSuchengStatus('pending')
-    setSuchengHearts(MAX_HEARTS)
+    if (suchengSession) {
+      setSuchengHearts(calculateSuchengHearts(suchengSession.questions.length))
+    } else {
+      setSuchengHearts(MAX_HEARTS)
+    }
     setSuchengPercentage(0)
     setSuchengIsCompleted(false)
     setSuchengTotalPoints(0)
@@ -109,7 +119,12 @@ function App() {
   const handleSelectSuchengSession = (session: SuchengWeiqiSession) => {
     setSuchengSession(session)
     setViewMode('suchengweiqi-quiz')
-    resetSuchengQuiz()
+    setSuchengCurrentIndex(0)
+    setSuchengStatus('pending')
+    setSuchengHearts(calculateSuchengHearts(session.questions.length))
+    setSuchengPercentage(0)
+    setSuchengIsCompleted(false)
+    setSuchengTotalPoints(0)
   }
 
   // 普通做题模式 - 下一题
