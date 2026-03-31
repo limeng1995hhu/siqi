@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Upload, FileText, Trophy } from 'lucide-react'
+import { Upload, FileText, Trophy, BookOpen } from 'lucide-react'
 import { ParsedQuestion, ProblemState } from './types'
 import { parseCSV, generateSampleCSV } from './lib/csvParser'
 import { playSound } from './lib/audio'
@@ -9,10 +9,14 @@ import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { ResultCard } from './components/ResultCard'
 import TextChoiceProblem from './components/TextChoiceProblem'
+import { SuchengWeiqiBrowser } from './components/SuchengWeiqiBrowser'
 
 const MAX_HEARTS = 5
 
+type ViewMode = 'home' | 'quiz' | 'suchengweiqi'
+
 function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>('home')
   const [questions, setQuestions] = useState<ParsedQuestion[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<number | undefined>()
@@ -29,6 +33,7 @@ function App() {
       const csvContent = generateSampleCSV()
       const parsed = parseCSV(csvContent)
       setQuestions(parsed)
+      setViewMode('quiz')
       resetQuiz()
     } catch (error) {
       console.error('加载示例数据失败:', error)
@@ -46,6 +51,7 @@ function App() {
         const csvContent = event.target?.result as string
         const parsed = parseCSV(csvContent)
         setQuestions(parsed)
+        setViewMode('quiz')
         resetQuiz()
       } catch (error) {
         console.error('解析CSV失败:', error)
@@ -67,7 +73,12 @@ function App() {
 
   const exitToHome = () => {
     setQuestions([])
+    setViewMode('home')
     resetQuiz()
+  }
+
+  const enterSuchengWeiqi = () => {
+    setViewMode('suchengweiqi')
   }
 
   const onNext = () => {
@@ -118,17 +129,38 @@ function App() {
     }
   }
 
-  if (questions.length === 0) {
+  if (viewMode === 'suchengweiqi') {
+    return <SuchengWeiqiBrowser onBack={exitToHome} />
+  }
+
+  if (viewMode === 'home' || questions.length === 0) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex items-center justify-center p-4">
         <div className="max-w-lg w-full bg-white rounded-2xl shadow-xl p-8">
           <div className="text-center mb-8">
             <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
             <h1 className="text-3xl font-bold text-gray-800 mb-2">围棋做题系统</h1>
-            <p className="text-gray-600">上传CSV文件或使用示例数据开始做题</p>
+            <p className="text-gray-600">选择题库或上传CSV文件开始做题</p>
           </div>
 
           <div className="space-y-4">
+            <button
+              onClick={enterSuchengWeiqi}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors border-b-4 border-amber-600 active:border-b-0"
+            >
+              <BookOpen className="w-5 h-5" />
+              速成围棋题库
+            </button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300" />
+              </div>
+              <div className="relative flex justify-center">
+                <span className="bg-white px-4 text-sm text-gray-500">或者</span>
+              </div>
+            </div>
+
             <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
               <div className="flex flex-col items-center justify-center pt-5 pb-6">
                 <Upload className="w-8 h-8 mb-2 text-gray-500" />
@@ -144,15 +176,6 @@ function App() {
                 onChange={handleFileUpload}
               />
             </label>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300" />
-              </div>
-              <div className="relative flex justify-center">
-                <span className="bg-white px-4 text-sm text-gray-500">或者</span>
-              </div>
-            </div>
 
             <button
               onClick={loadSampleData}

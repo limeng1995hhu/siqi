@@ -31,3 +31,31 @@ export interface TextChoiceProblemProps {
   onSelect?: (optionId: number) => void;
   onStateChange?: (state: ProblemState) => void;
 }
+
+// 速成围棋题库类型
+export interface SuchengWeiqiRow {
+  id: string;
+  book: string;
+  volume: string;
+  chapter: string;
+  question_no: string;
+  sgf_content: string;
+}
+
+export interface SuchengWeiqiQuestion {
+  id: number;
+  book: string;
+  volume: string;
+  chapter: string;
+  subChapter: string;
+  questionNo: string;
+  sgfContent: string;
+}
+
+export interface DirectoryNode {
+  name: string;
+  type: 'book' | 'volume' | 'chapter' | 'subChapter' | 'question';
+  children?: DirectoryNode[];
+  questions?: SuchengWeiqiQuestion[];
+  fullPath?: string;
+}
