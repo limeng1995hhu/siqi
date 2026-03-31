@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react'
 import { Upload, FileText, Trophy } from 'lucide-react'
 import { ParsedQuestion, ProblemState } from './types'
 import { parseCSV, generateSampleCSV } from './lib/csvParser'
+import { playSound } from './lib/audio'
 import { Header } from './components/Header'
 import { Footer } from './components/Footer'
 import { ResultCard } from './components/ResultCard'
@@ -76,6 +77,7 @@ function App() {
       setStatus('pending')
     } else {
       setIsCompleted(true)
+      playSound('finish')
     }
   }
 
@@ -93,9 +95,11 @@ function App() {
       setStatus('correct')
       setTotalPoints((prev) => prev + 10)
       setPercentage((prev) => prev + 100 / questions.length)
+      playSound('correct')
     } else {
       setStatus('error')
       setHearts((prev) => Math.max(prev - 1, 0))
+      playSound('incorrect')
     }
   }
 
