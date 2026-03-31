@@ -1,32 +1,23 @@
 'use client';
 
-import { useRef, useEffect } from 'react';
+import { useCallback } from 'react';
 
 import { Goban as PreactGoban } from '@sabaki/shudan';
 import { render, createElement } from 'preact';
 
+import './goban.css';
 import '../theme.css';
 
-interface GobanProps {
-  vertexSize: number;
-  signMap: number[][];
-  markerMap: any[][];
-  [key: string]: any;
-}
-
-export default function Goban(props: GobanProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const element = containerRef.current;
+export default function Goban(props: any) {
+  const refCallback = useCallback((element: HTMLDivElement | null) => {
     if (!element) return;
 
+    // 使用Preact渲染Goban组件
     render(createElement(PreactGoban as any, props), element);
 
-    return () => {
-      render(null, element);
-    };
+    // 清理函数
+    return () => render(null, element);
   }, [props]);
 
-  return <div ref={containerRef} />;
+  return <div ref={refCallback} />;
 }

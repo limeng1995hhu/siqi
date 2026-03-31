@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Book, ChevronLeft, FolderOpen, FileText } from 'lucide-react';
-import type { DirectoryNode } from '../types';
+import { Book, ChevronLeft, FolderOpen, FileText, Play } from 'lucide-react';
+import type { DirectoryNode, SuchengWeiqiQuestion } from '../types';
 import { loadSuchengWeiqiData, buildDirectoryTree } from '../lib/suchengweiqiParser';
+import LifeDeathProblem from './LifeDeathProblem';
 
 interface SuchengWeiqiBrowserProps {
   onBack: () => void;
@@ -12,11 +13,17 @@ type NavigationStack = {
   title: string;
 }[];
 
+type ViewMode = 'directory' | 'quiz';
+
 export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
   const [directoryTree, setDirectoryTree] = useState<DirectoryNode[]>([]);
   const [navigationStack, setNavigationStack] = useState<NavigationStack>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('directory');
+  const [currentQuestion, setCurrentQuestion] = useState<SuchengWeiqiQuestion | null>(null);
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionsList, setQuestionsList] = useState<SuchengWeiqiQuestion[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -49,13 +56,45 @@ export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
     setNavigationStack([...navigationStack, { node, title }]);
   };
 
+  const handleQuestionClick = (question: SuchengWeiqiQuestion, index: number) => {
+    setCurrentQuestion(question);
+    setCurrentQuestionIndex(index);
+    setViewMode('quiz');
+  };
+
   const handleBack = useCallback(() => {
-    if (navigationStack.length > 0) {
+    if (viewMode === 'quiz') {
+      setViewMode('directory');
+      setCurrentQuestion(null);
+    } else if (navigationStack.length > 0) {
       setNavigationStack(navigationStack.slice(0, -1));
     } else {
       onBack();
     }
-  }, [navigationStack, onBack]);
+  }, [viewMode, navigationStack, onBack]);
+
+  const handleNextQuestion = useCallback(() => {
+    if (currentQuestionIndex < questionsList.length - 1) {
+      const nextIndex = currentQuestionIndex + 1;
+      setCurrentQuestion(questionsList[nextIndex]);
+      setCurrentQuestionIndex(nextIndex);
+    }
+  }, [currentQuestionIndex, questionsList]);
+
+  const handlePrevQuestion = useCallback(() => {
+    if (currentQuestionIndex > 0) {
+      const prevIndex = currentQuestionIndex - 1;
+      setCurrentQuestion(questionsList[prevIndex]);
+      setCurrentQuestionIndex(prevIndex);
+    }
+  }, [currentQuestionIndex, questionsList]);
+
+  // 当进入 subChapter 时，保存题目列表
+  useEffect(() => {
+    if (currentNode?.type === 'subChapter' && currentNode.questions) {
+      setQuestionsList(currentNode.questions);
+    }
+  }, [currentNode]);
 
   const getNodeIcon = (node: DirectoryNode) => {
     switch (node.type) {
@@ -112,9 +151,56 @@ export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
     );
   }
 
+  if (viewMode === 'quiz' && currentQuestion) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white pb-8">
+        <div className="bg-white shadow-sm sticky top-0 z-10">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={handleBack}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-xl font-bold text-gray-800 truncate">
+                  {currentQuestion.questionNo}
+                </h1>
+                <p className="text-sm text-gray-500">
+                  {currentQuestionIndex + 1} / {questionsList.length}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-4xl mx-auto px-4 pt-6">
+          <LifeDeathProblem initSgf={currentQuestion.sgfContent} />
+
+          <div className="flex gap-4 mt-6 justify-center">
+            <button
+              onClick={handlePrevQuestion}
+              disabled={currentQuestionIndex === 0}
+              className="px-6 py-3 bg-gray-500 text-white rounded-xl font-bold hover:bg-gray-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              上一题
+            </button>
+            <button
+              onClick={handleNextQuestion}
+              disabled={currentQuestionIndex === questionsList.length - 1}
+              className="px-6 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              下一题
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white pb-8">
-      {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
@@ -135,7 +221,6 @@ export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
         </div>
       </div>
 
-      {/* Content */}
       <div className="max-w-4xl mx-auto px-4 pt-6">
         <div className="grid gap-3">
           {displayNodes.map((node, index) => (
@@ -144,7 +229,7 @@ export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
               onClick={() => handleNodeClick(node)}
               className={`flex items-center gap-4 p-4 rounded-xl text-white transition-all transform hover:scale-[1.02] active:scale-[0.98] shadow-md border-b-4 ${
                 getNodeColor(node)
-              } border-opacity-30`}
+              }`}
               style={{
                 borderBottomColor: 'rgba(0,0,0,0.2)',
               }}
@@ -170,12 +255,21 @@ export const SuchengWeiqiBrowser = ({ onBack }: SuchengWeiqiBrowserProps) => {
           ))}
         </div>
 
-        {displayNodes.length === 0 && currentNode?.questions && (
-          <div className="text-center py-12">
-            <FileText className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-600 text-lg">
-              本题集共有 {currentNode.questions.length} 道题目
-            </p>
+        {currentNode?.type === 'subChapter' && currentNode.questions && (
+          <div className="mt-8">
+            <h2 className="text-xl font-bold text-gray-800 mb-4">题目列表</h2>
+            <div className="grid gap-2">
+              {currentNode.questions.map((question, index) => (
+                <button
+                  key={question.id}
+                  onClick={() => handleQuestionClick(question, index)}
+                  className="flex items-center gap-3 p-4 bg-white rounded-xl shadow hover:shadow-md transition-all border-2 border-transparent hover:border-amber-400"
+                >
+                  <Play className="w-5 h-5 text-amber-500" />
+                  <span className="font-medium text-gray-800">{question.questionNo}</span>
+                </button>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -95,7 +95,6 @@ export const buildDirectoryTree = (questions: SuchengWeiqiQuestion[]): Directory
 export const loadSuchengWeiqiData = async (): Promise<SuchengWeiqiQuestion[]> => {
   const possiblePaths = [
     '/suchengweiqi.csv',
-    `${import.meta.env.BASE_URL || ''}suchengweiqi.csv`,
     './suchengweiqi.csv',
     'suchengweiqi.csv',
   ];
