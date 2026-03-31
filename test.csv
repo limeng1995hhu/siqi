@@ -1,0 +1,3 @@
+sgf,type,question,options,correctAnswer
+"(;SZ[19]AB[pd][dd]AW[pp][dp]LB[rd:A][ld:B][qd:C])",TEXTCHOICE,测试题1，哪一手是9段的感觉？,"[""A是9段的感觉"",""B是9段的感觉"",""C是9段的感觉""]",A
+"(;SZ[19]AB[pd][dd][jd]AW[pp][dp][jp]LB[ra:A][la:B][sa:C])",TEXTCHOICE,测试题2，哪一手是9段的感觉？,"[""A是9段的感觉"",""B是9段的感觉"",""C是9段的感觉""]",B
