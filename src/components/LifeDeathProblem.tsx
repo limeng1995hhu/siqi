@@ -141,30 +141,24 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
   const BOARD_CONTAINER_SIZE = boardSize === 19 ? 530 : 490
   const vertexSize = Math.floor((BOARD_CONTAINER_SIZE - (boardSize === 19 ? 60 : 50)) / boardSize)
 
-  // 棋盘状态管理 - 使用 key 来强制重置
-  const [resetKey, setResetKey] = useState(0)
+  // 棋盘状态管理
   const [boardInstance, setBoardInstance] = useState<Board>(initialBoard)
   const [boardState, setBoardState] = useState<(0 | 1 | -1)[][]>(initialBoardState)
   const [currentGameTree, setCurrentGameTree] = useState(initialGameTree)
   const [markerState, setMarkerState] = useState(markerMap)
 
-  // 当 solveState 变为 pending 时，强制重置整个组件
+  // 当 solveState 变为 pending 时，重置所有状态
   useEffect(() => {
-    if (solveState === 'pending' && problemState !== 'pending') {
-      setResetKey(k => k + 1)
+    if (solveState === 'pending') {
+      setBoardInstance(initialBoard)
+      setBoardState(initialBoardState)
+      setCurrentGameTree(initialGameTree)
+      setMarkerState(markerMap)
+      setProblemState('pending')
+      setCurrentPlayer(1)
+      setClickCount(0)
     }
-  }, [solveState])
-
-  // 当 resetKey 变化时，重置所有状态
-  useEffect(() => {
-    setBoardInstance(initialBoard)
-    setBoardState(initialBoardState)
-    setCurrentGameTree(initialGameTree)
-    setMarkerState(markerMap)
-    setProblemState('pending')
-    setCurrentPlayer(1)
-    setClickCount(0)
-  }, [resetKey, initialBoard, initialBoardState, initialGameTree, markerMap])
+  }, [solveState, initialBoard, initialBoardState, initialGameTree, markerMap])
 
   // 监听 solveState 的变化
   useEffect(() => {
@@ -269,7 +263,7 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
   }, [boardInstance, currentPlayer, boardState, onClick, clickCount, currentGameTree, problemState])
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full" key={resetKey}>
+    <div className="flex flex-col lg:flex-row gap-4 h-full">
       <audio ref={placeStoneAudioRef} src="/audio/place_stone.mp3" preload="auto" />
       <audio ref={captureAudioRef} src="/audio/capture.mp3" preload="auto" />
 
