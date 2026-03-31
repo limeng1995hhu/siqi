@@ -50,17 +50,11 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     }
   }
 
-  const [currentGameTree, setCurrentGameTree] = useState(() => {
-    try {
-      return Sgf.parse(initSgf)[0]
-    } catch (e) {
-      console.error('SGF 解析错误:', e)
-      return { data: {}, children: [] }
-    }
-  })
+  // 使用key来强制重置组件
+  const [resetKey, setResetKey] = useState(0)
 
   // 初始化棋盘逻辑
-  const { initialBoard, initialBoardState, stem } = useMemo(() => {
+  const { initialBoard, initialBoardState, stem, initialGameTree } = useMemo(() => {
     try {
       const initGameTree = Sgf.parse(initSgf)
       const rootNode = initGameTree[0]
@@ -71,10 +65,13 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       const AW = rootData['AW'] || []
       const SZ = Number(rootData['SZ']?.[0]) || 19
 
-      // 解析注释中的STEM内容
-      const comment = rootData['C']?.[0] || ''
-      const stemMatch = comment.match(/STEM:(.*?)(?=OPTION|ANS:|$)/)
-      const stem = stemMatch ? stemMatch[1].trim() : '请在棋盘上落子，解决这个死活题。黑先。'
+      // 直接使用根节点C属性的内容作为题干
+      let stem = rootData['C']?.[0] || ''
+      // 清理多余的空白字符
+      stem = stem.replace(/\s+/g, ' ').trim()
+      if (!stem) {
+        stem = '请在棋盘上落子，解决这个死活题。黑先。'
+      }
 
       // 创建初始棋盘
       const createEmptyBoard = (size: number) =>
@@ -102,7 +99,8 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       return {
         initialBoard: board,
         initialBoardState: board.signMap as (0 | 1 | -1)[][],
-        stem
+        stem,
+        initialGameTree: rootNode
       }
     } catch (error) {
       console.error('SGF解析错误:', error)
@@ -113,14 +111,41 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       return {
         initialBoard: new Board(createEmptyBoard(SZ)),
         initialBoardState: createEmptyBoard(SZ),
-        stem: '请在棋盘上落子'
+        stem: '请在棋盘上落子',
+        initialGameTree: { data: {}, children: [] }
       }
     }
-  }, [initSgf])
+  }, [initSgf, resetKey])
 
   // 棋盘状态管理
   const [boardInstance, setBoardInstance] = useState<Board>(initialBoard)
   const [boardState, setBoardState] = useState<(0 | 1 | -1)[][]>(initialBoardState)
+  const [currentGameTree, setCurrentGameTree] = useState(initialGameTree)
+
+  // 当 solveState 变为 pending 时重置棋盘
+  useEffect(() => {
+    if (solveState === 'pending') {
+      setResetKey(k => k + 1)
+      setProblemState('pending')
+      setCurrentPlayer(1)
+      setClickCount(0)
+    }
+  }, [solveState])
+
+  // 当 initSgf 或 resetKey 变化时重置状态
+  useEffect(() => {
+    setBoardInstance(initialBoard)
+    setBoardState(initialBoardState)
+    setCurrentGameTree(initialGameTree)
+    setProblemState('pending')
+    setCurrentPlayer(1)
+    setClickCount(0)
+  }, [initSgf, resetKey, initialBoard, initialBoardState, initialGameTree])
+
+  // 监听 solveState 的变化
+  useEffect(() => {
+    setProblemState(solveState)
+  }, [solveState])
 
   // 更新状态并通知父组件
   const updateProblemState = (newState: ProblemState) => {
@@ -128,43 +153,11 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     onStateChange?.(newState)
   }
 
-  // 添加对 initSgf 变化的监听
-  useEffect(() => {
-    if (solveState === 'pending') {
-      try {
-        const newGameTree = Sgf.parse(initSgf)[0]
-        setBoardInstance(initialBoard)
-        setBoardState(initialBoardState)
-        setCurrentPlayer(1)
-        setClickCount(0)
-        setCurrentGameTree(newGameTree)
-        setProblemState('pending')
-      } catch (e) {
-        console.error('重置棋盘失败:', e)
-      }
-    }
-  }, [initSgf, initialBoard, initialBoardState, solveState])
-
-  // 监听 solveState 的变化
-  useEffect(() => {
-    setProblemState(solveState)
-  }, [solveState])
-
   // 修改重置函数
   const resetBoard = useCallback(() => {
-    try {
-      const newGameTree = Sgf.parse(initSgf)[0]
-      setBoardInstance(initialBoard)
-      setBoardState(initialBoardState)
-      setCurrentPlayer(1)
-      setClickCount(0)
-      setCurrentGameTree(newGameTree)
-      setProblemState('pending')
-      onStateChange?.('pending')
-    } catch (e) {
-      console.error('重置棋盘失败:', e)
-    }
-  }, [initSgf, initialBoard, initialBoardState, onStateChange])
+    setResetKey(k => k + 1)
+    onStateChange?.('pending')
+  }, [onStateChange])
 
   // 棋盘点击处理
   const handleVertexClick = useCallback((_: unknown, coord: number[]) => {
@@ -261,19 +254,19 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
   }, [boardInstance, currentPlayer, boardState, onClick, clickCount, currentGameTree, problemState])
 
   return (
-    <div className="flex flex-col lg:flex-row gap-4 h-full">
+    <div className="flex flex-col lg:flex-row gap-4 h-full" key={resetKey}>
       <audio ref={placeStoneAudioRef} src="/audio/place_stone.mp3" preload="auto" />
       <audio ref={captureAudioRef} src="/audio/capture.mp3" preload="auto" />
 
       <div className="flex justify-center lg:justify-start">
         <div
           style={{
-            width: '500px',
-            height: '500px',
+            width: '380px',
+            height: '380px',
           }}
         >
           <Goban
-            vertexSize={40}
+            vertexSize={30}
             signMap={boardState}
             onVertexClick={handleVertexClick}
           />

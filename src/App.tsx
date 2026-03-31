@@ -190,7 +190,8 @@ function App() {
     if (suchengStatus === 'pending') {
       // 死活题模式下 pending 状态不需要操作，用户在棋盘上落子
     } else if (suchengStatus === 'error') {
-      // 错误时重置棋盘在组件内部处理
+      // 错误时重置
+      setSuchengStatus('pending')
     } else if (suchengStatus === 'correct') {
       onSuchengNext()
     }
