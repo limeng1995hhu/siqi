@@ -37,6 +37,7 @@ function App() {
   const [suchengPercentage, setSuchengPercentage] = useState(0)
   const [suchengIsCompleted, setSuchengIsCompleted] = useState(false)
   const [suchengTotalPoints, setSuchengTotalPoints] = useState(0)
+  const [suchengProblemKey, setSuchengProblemKey] = useState(0)
 
   const currentQuestion = questions[currentIndex]
   const currentSuchengQuestion = suchengSession?.questions[suchengCurrentIndex]
@@ -125,6 +126,7 @@ function App() {
     setSuchengPercentage(0)
     setSuchengIsCompleted(false)
     setSuchengTotalPoints(0)
+    setSuchengProblemKey(0)
   }
 
   // 普通做题模式 - 下一题
@@ -144,6 +146,7 @@ function App() {
     if (suchengSession && suchengCurrentIndex < suchengSession.questions.length - 1) {
       setSuchengCurrentIndex((current) => current + 1)
       setSuchengStatus('pending')
+      setSuchengProblemKey(prev => prev + 1)
     } else {
       setSuchengIsCompleted(true)
       playSound('finish')
@@ -205,7 +208,8 @@ function App() {
     if (suchengStatus === 'pending') {
       // 死活题模式下 pending 状态不需要操作，用户在棋盘上落子
     } else if (suchengStatus === 'error') {
-      // 错误时重置
+      // 错误时重置 - 通过改变 key 强制重新渲染组件
+      setSuchengProblemKey(prev => prev + 1)
       setSuchengStatus('pending')
     } else if (suchengStatus === 'correct') {
       onSuchengNext()
@@ -281,6 +285,7 @@ function App() {
           </div>
 
           <LifeDeathProblem
+            key={suchengProblemKey}
             initSgf={currentSuchengQuestion.sgfContent}
             onStateChange={handleSuchengStateChange}
           />
