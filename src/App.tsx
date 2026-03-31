@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { Upload, FileText, Trophy, BookOpen } from 'lucide-react'
-import { ParsedQuestion, ProblemState } from './types'
+import { ParsedQuestion, ProblemState, SuchengWeiqiSession } from './types'
 import { parseCSV, generateSampleCSV } from './lib/csvParser'
 import { playSound } from './lib/audio'
 import { Header } from './components/Header'
@@ -10,13 +10,16 @@ import { Footer } from './components/Footer'
 import { ResultCard } from './components/ResultCard'
 import TextChoiceProblem from './components/TextChoiceProblem'
 import { SuchengWeiqiBrowser } from './components/SuchengWeiqiBrowser'
+import LifeDeathProblem from './components/LifeDeathProblem'
 
 const MAX_HEARTS = 5
 
-type ViewMode = 'home' | 'quiz' | 'suchengweiqi'
+type ViewMode = 'home' | 'quiz' | 'suchengweiqi' | 'suchengweiqi-quiz'
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('home')
+
+  // 普通做题模式状态
   const [questions, setQuestions] = useState<ParsedQuestion[]>([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOption, setSelectedOption] = useState<number | undefined>()
@@ -26,8 +29,19 @@ function App() {
   const [isCompleted, setIsCompleted] = useState(false)
   const [totalPoints, setTotalPoints] = useState(0)
 
-  const currentQuestion = questions[currentIndex]
+  // 速成围棋套题模式状态
+  const [suchengSession, setSuchengSession] = useState<SuchengWeiqiSession | null>(null)
+  const [suchengCurrentIndex, setSuchengCurrentIndex] = useState(0)
+  const [suchengStatus, setSuchengStatus] = useState<ProblemState>('pending')
+  const [suchengHearts, setSuchengHearts] = useState(MAX_HEARTS)
+  const [suchengPercentage, setSuchengPercentage] = useState(0)
+  const [suchengIsCompleted, setSuchengIsCompleted] = useState(false)
+  const [suchengTotalPoints, setSuchengTotalPoints] = useState(0)
 
+  const currentQuestion = questions[currentIndex]
+  const currentSuchengQuestion = suchengSession?.questions[suchengCurrentIndex]
+
+  // 普通做题模式函数
   const loadSampleData = useCallback(() => {
     try {
       const csvContent = generateSampleCSV()
@@ -71,16 +85,34 @@ function App() {
     setTotalPoints(0)
   }
 
+  const resetSuchengQuiz = () => {
+    setSuchengCurrentIndex(0)
+    setSuchengStatus('pending')
+    setSuchengHearts(MAX_HEARTS)
+    setSuchengPercentage(0)
+    setSuchengIsCompleted(false)
+    setSuchengTotalPoints(0)
+  }
+
   const exitToHome = () => {
     setQuestions([])
+    setSuchengSession(null)
     setViewMode('home')
     resetQuiz()
+    resetSuchengQuiz()
   }
 
   const enterSuchengWeiqi = () => {
     setViewMode('suchengweiqi')
   }
 
+  const handleSelectSuchengSession = (session: SuchengWeiqiSession) => {
+    setSuchengSession(session)
+    setViewMode('suchengweiqi-quiz')
+    resetSuchengQuiz()
+  }
+
+  // 普通做题模式 - 下一题
   const onNext = () => {
     if (currentIndex < questions.length - 1) {
       setCurrentIndex((current) => current + 1)
@@ -88,6 +120,17 @@ function App() {
       setStatus('pending')
     } else {
       setIsCompleted(true)
+      playSound('finish')
+    }
+  }
+
+  // 速成围棋套题 - 下一题
+  const onSuchengNext = () => {
+    if (suchengSession && suchengCurrentIndex < suchengSession.questions.length - 1) {
+      setSuchengCurrentIndex((current) => current + 1)
+      setSuchengStatus('pending')
+    } else {
+      setSuchengIsCompleted(true)
       playSound('finish')
     }
   }
@@ -114,6 +157,20 @@ function App() {
     }
   }
 
+  const handleSuchengStateChange = (state: ProblemState) => {
+    setSuchengStatus(state)
+    if (state === 'correct') {
+      setSuchengTotalPoints((prev) => prev + 10)
+      if (suchengSession) {
+        setSuchengPercentage((prev) => prev + 100 / suchengSession.questions.length)
+      }
+      playSound('correct')
+    } else if (state === 'error') {
+      setSuchengHearts((prev) => Math.max(prev - 1, 0))
+      playSound('incorrect')
+    }
+  }
+
   const handleRetry = () => {
     setSelectedOption(undefined)
     setStatus('pending')
@@ -129,8 +186,97 @@ function App() {
     }
   }
 
+  const handleSuchengFooterCheck = () => {
+    if (suchengStatus === 'pending') {
+      // 死活题模式下 pending 状态不需要操作，用户在棋盘上落子
+    } else if (suchengStatus === 'error') {
+      // 错误时重置棋盘在组件内部处理
+    } else if (suchengStatus === 'correct') {
+      onSuchengNext()
+    }
+  }
+
+  // 速成围棋套题模式 - 题目列表
   if (viewMode === 'suchengweiqi') {
-    return <SuchengWeiqiBrowser onBack={exitToHome} />
+    return (
+      <SuchengWeiqiBrowser
+        onBack={exitToHome}
+        onSelectSession={handleSelectSuchengSession}
+      />
+    )
+  }
+
+  // 速成围棋套题做题模式 - 完成页面
+  if (viewMode === 'suchengweiqi-quiz' && suchengIsCompleted && suchengSession) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white flex items-center justify-center p-4">
+        <div className="max-w-lg w-full text-center">
+          <Trophy className="w-24 h-24 text-yellow-500 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">恭喜完成！</h1>
+          <p className="text-gray-600 mb-2">{suchengSession.title}</p>
+          <p className="text-gray-500 mb-8">你已完成所有题目</p>
+
+          <div className="grid grid-cols-2 gap-4 mb-8">
+            <ResultCard variant="points" value={suchengTotalPoints} label="总积分" />
+            <ResultCard variant="hearts" value={suchengHearts} label="剩余生命" />
+          </div>
+
+          <div className="flex gap-4 justify-center">
+            <button
+              onClick={resetSuchengQuiz}
+              className="px-6 py-3 bg-green-500 text-white rounded-xl font-bold hover:bg-green-600 transition-colors border-b-4 border-green-600 active:border-b-0"
+            >
+              重新开始
+            </button>
+            <button
+              onClick={() => setViewMode('suchengweiqi')}
+              className="px-6 py-3 bg-amber-500 text-white rounded-xl font-bold hover:bg-amber-600 transition-colors border-b-4 border-amber-600 active:border-b-0"
+            >
+              选择题库
+            </button>
+            <button
+              onClick={exitToHome}
+              className="px-6 py-3 bg-gray-500 text-white rounded-xl font-bold hover:bg-gray-600 transition-colors border-b-4 border-gray-600 active:border-b-0"
+            >
+              返回首页
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // 速成围棋套题做题模式 - 做题页面
+  if (viewMode === 'suchengweiqi-quiz' && suchengSession && currentSuchengQuestion) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white pb-32">
+        <Header
+          hearts={suchengHearts}
+          percentage={suchengPercentage}
+          onExit={exitToHome}
+        />
+
+        <div className="mx-auto max-w-4xl px-4 pt-6">
+          <div className="text-center mb-4">
+            <p className="text-sm text-gray-500 mb-1">{suchengSession.title}</p>
+            <span className="text-sm text-gray-500">
+              第 {suchengCurrentIndex + 1} / {suchengSession.questions.length} 题
+            </span>
+          </div>
+
+          <LifeDeathProblem
+            initSgf={currentSuchengQuestion.sgfContent}
+            onStateChange={handleSuchengStateChange}
+          />
+        </div>
+
+        <Footer
+          onCheck={handleSuchengFooterCheck}
+          status={suchengStatus}
+          disabled={suchengStatus === 'pending'}
+        />
+      </div>
+    )
   }
 
   if (viewMode === 'home' || questions.length === 0) {

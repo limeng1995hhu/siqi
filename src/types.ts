@@ -59,3 +59,9 @@ export interface DirectoryNode {
   questions?: SuchengWeiqiQuestion[];
   fullPath?: string;
 }
+
+// 速成围棋套题会话
+export interface SuchengWeiqiSession {
+  title: string;
+  questions: SuchengWeiqiQuestion[];
+}
