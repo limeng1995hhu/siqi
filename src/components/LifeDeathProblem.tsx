@@ -153,11 +153,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     onStateChange?.(newState)
   }
 
-  // 修改重置函数
-  const resetBoard = useCallback(() => {
-    setResetKey(k => k + 1)
-    onStateChange?.('pending')
-  }, [onStateChange])
 
   // 棋盘点击处理
   const handleVertexClick = useCallback((_: unknown, coord: number[]) => {
@@ -261,12 +256,12 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       <div className="flex justify-center lg:justify-start">
         <div
           style={{
-            width: '380px',
-            height: '380px',
+            width: '280px',
+            height: '280px',
           }}
         >
           <Goban
-            vertexSize={30}
+            vertexSize={25}
             signMap={boardState}
             onVertexClick={handleVertexClick}
           />
@@ -276,15 +271,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       <div className="flex-1 flex flex-col gap-4 min-w-[300px]">
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-xl font-bold mb-2">{stem}</h2>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={resetBoard}
-            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg font-bold hover:bg-gray-600 transition-colors"
-          >
-            重置
-          </button>
         </div>
 
         {problemState === 'correct' && (
