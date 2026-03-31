@@ -50,8 +50,18 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     }
   }
 
+  // 初始化游戏树
+  const [currentGameTree, setCurrentGameTree] = useState(() => {
+    try {
+      return Sgf.parse(initSgf)[0]
+    } catch (e) {
+      console.error('SGF 解析错误:', e)
+      return { data: {}, children: [] }
+    }
+  })
+
   // 初始化棋盘逻辑
-  const { initialBoard, initialBoardState, stem, initialGameTree, boardSize, markerMap } = useMemo(() => {
+  const { initialBoard, initialBoardState, stem, boardSize, markerMap } = useMemo(() => {
     try {
       const initGameTree = Sgf.parse(initSgf)
       const rootNode = initGameTree[0]
@@ -116,7 +126,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
         initialBoard: board,
         initialBoardState: board.signMap as (0 | 1 | -1)[][],
         stem,
-        initialGameTree: rootNode,
         boardSize: SZ,
         markerMap
       }
@@ -130,7 +139,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
         initialBoard: new Board(createEmptyBoard(SZ)),
         initialBoardState: createEmptyBoard(SZ),
         stem: '请在棋盘上落子',
-        initialGameTree: { data: {}, children: [] },
         boardSize: SZ,
         markerMap: Array(SZ).fill(null).map(() => Array(SZ).fill(null))
       }
@@ -144,32 +152,32 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
   // 棋盘状态管理
   const [boardInstance, setBoardInstance] = useState<Board>(initialBoard)
   const [boardState, setBoardState] = useState<(0 | 1 | -1)[][]>(initialBoardState)
-  const [currentGameTree, setCurrentGameTree] = useState(initialGameTree)
   const [markerState, setMarkerState] = useState(markerMap)
-
-  // 当 solveState 变为 pending 时，重置所有状态
-  useEffect(() => {
-    if (solveState === 'pending') {
-      setBoardInstance(initialBoard)
-      setBoardState(initialBoardState)
-      setCurrentGameTree(initialGameTree)
-      setMarkerState(markerMap)
-      setProblemState('pending')
-      setCurrentPlayer(1)
-      setClickCount(0)
-    }
-  }, [solveState, initialBoard, initialBoardState, initialGameTree, markerMap])
-
-  // 监听 solveState 的变化
-  useEffect(() => {
-    setProblemState(solveState)
-  }, [solveState])
 
   // 更新状态并通知父组件
   const updateProblemState = (newState: ProblemState) => {
     setProblemState(newState)
     onStateChange?.(newState)
   }
+
+  // 添加对 initSgf 变化和 solveState 变化的监听
+  useEffect(() => {
+    if (solveState === 'pending') {
+      const newGameTree = Sgf.parse(initSgf)[0]
+      setBoardInstance(initialBoard)
+      setBoardState(initialBoardState)
+      setMarkerState(markerMap)
+      setCurrentPlayer(1)
+      setClickCount(0)
+      setCurrentGameTree(newGameTree)
+      setProblemState('pending')
+    }
+  }, [initSgf, initialBoard, initialBoardState, markerMap, solveState])
+
+  // 监听 solveState 的变化
+  useEffect(() => {
+    setProblemState(solveState)
+  }, [solveState])
 
   // 棋盘点击处理
   const handleVertexClick = useCallback((_: unknown, coord: number[]) => {
