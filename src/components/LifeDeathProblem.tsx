@@ -78,55 +78,29 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
 
       let board = new Board(createEmptyBoard(SZ))
 
-      let currentNode: any = rootNode
-      while (currentNode) {
-        const nodeData = currentNode.data
+      // 只处理根节点的AB/AW，不处理后续的B/W
+      const nodeData = rootNode.data
 
-        if (nodeData['AB']) {
-          const AB = Array.isArray(nodeData['AB']) ? nodeData['AB'] : [nodeData['AB']]
-          AB.forEach((coord: string) => {
-            const x = coord.charCodeAt(0) - 97
-            const y = coord.charCodeAt(1) - 97
-            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
-              board = board.makeMove(1, [x, y])
-            }
-          })
-        }
-
-        if (nodeData['AW']) {
-          const AW = Array.isArray(nodeData['AW']) ? nodeData['AW'] : [nodeData['AW']]
-          AW.forEach((coord: string) => {
-            const x = coord.charCodeAt(0) - 97
-            const y = coord.charCodeAt(1) - 97
-            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
-              board = board.makeMove(-1, [x, y])
-            }
-          })
-        }
-
-        if (nodeData['B']) {
-          const B = Array.isArray(nodeData['B']) ? nodeData['B'][0] : nodeData['B']
-          if (B) {
-            const x = B.charCodeAt(0) - 97
-            const y = B.charCodeAt(1) - 97
-            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
-              board = board.makeMove(1, [x, y])
-            }
+      if (nodeData['AB']) {
+        const AB = Array.isArray(nodeData['AB']) ? nodeData['AB'] : [nodeData['AB']]
+        AB.forEach((coord: string) => {
+          const x = coord.charCodeAt(0) - 97
+          const y = coord.charCodeAt(1) - 97
+          if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+            board = board.makeMove(1, [x, y])
           }
-        }
+        })
+      }
 
-        if (nodeData['W']) {
-          const W = Array.isArray(nodeData['W']) ? nodeData['W'][0] : nodeData['W']
-          if (W) {
-            const x = W.charCodeAt(0) - 97
-            const y = W.charCodeAt(1) - 97
-            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
-              board = board.makeMove(-1, [x, y])
-            }
+      if (nodeData['AW']) {
+        const AW = Array.isArray(nodeData['AW']) ? nodeData['AW'] : [nodeData['AW']]
+        AW.forEach((coord: string) => {
+          const x = coord.charCodeAt(0) - 97
+          const y = coord.charCodeAt(1) - 97
+          if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+            board = board.makeMove(-1, [x, y])
           }
-        }
-
-        currentNode = currentNode.children?.[0]
+        })
       }
 
       // 处理标记
