@@ -54,15 +54,14 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
   const [resetKey, setResetKey] = useState(0)
 
   // 初始化棋盘逻辑
-  const { initialBoard, initialBoardState, stem, initialGameTree } = useMemo(() => {
+  const { initialBoard, initialBoardState, stem, initialGameTree, boardSize, markerMap } = useMemo(() => {
     try {
       const initGameTree = Sgf.parse(initSgf)
       const rootNode = initGameTree[0]
       const rootData = rootNode.data
 
       // 获取棋盘参数
-      const AB = rootData['AB'] || []
-      const AW = rootData['AW'] || []
+      const LB = rootData['LB'] || []
       const SZ = Number(rootData['SZ']?.[0]) || 19
 
       // 直接使用根节点C属性的内容作为题干
@@ -79,28 +78,77 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
 
       let board = new Board(createEmptyBoard(SZ))
 
-      // 添加棋子的工具函数
-      const addStones = (board: Board, coords: string[], sign: 1 | -1) => {
-        const coordArray = Array.isArray(coords) ? coords : [coords]
-        return coordArray.reduce((currentBoard, coord) => {
-          if (!coord) return currentBoard
+      let currentNode: any = rootNode
+      while (currentNode) {
+        const nodeData = currentNode.data
+
+        if (nodeData['AB']) {
+          const AB = Array.isArray(nodeData['AB']) ? nodeData['AB'] : [nodeData['AB']]
+          AB.forEach((coord: string) => {
+            const x = coord.charCodeAt(0) - 97
+            const y = coord.charCodeAt(1) - 97
+            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+              board = board.makeMove(1, [x, y])
+            }
+          })
+        }
+
+        if (nodeData['AW']) {
+          const AW = Array.isArray(nodeData['AW']) ? nodeData['AW'] : [nodeData['AW']]
+          AW.forEach((coord: string) => {
+            const x = coord.charCodeAt(0) - 97
+            const y = coord.charCodeAt(1) - 97
+            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+              board = board.makeMove(-1, [x, y])
+            }
+          })
+        }
+
+        if (nodeData['B']) {
+          const B = Array.isArray(nodeData['B']) ? nodeData['B'][0] : nodeData['B']
+          if (B) {
+            const x = B.charCodeAt(0) - 97
+            const y = B.charCodeAt(1) - 97
+            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+              board = board.makeMove(1, [x, y])
+            }
+          }
+        }
+
+        if (nodeData['W']) {
+          const W = Array.isArray(nodeData['W']) ? nodeData['W'][0] : nodeData['W']
+          if (W) {
+            const x = W.charCodeAt(0) - 97
+            const y = W.charCodeAt(1) - 97
+            if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
+              board = board.makeMove(-1, [x, y])
+            }
+          }
+        }
+
+        currentNode = currentNode.children?.[0]
+      }
+
+      // 处理标记
+      const markerMap = Array(SZ).fill(null).map(() => Array(SZ).fill(null))
+      if (Array.isArray(LB)) {
+        LB.forEach((label: string) => {
+          const [coord, text] = label.split(':')
           const x = coord.charCodeAt(0) - 97
           const y = coord.charCodeAt(1) - 97
           if (x >= 0 && y >= 0 && x < SZ && y < SZ) {
-            return currentBoard.makeMove(sign, [x, y])
+            markerMap[y][x] = { type: 'label', label: text }
           }
-          return currentBoard
-        }, board)
+        })
       }
-      // 应用初始棋子
-      board = addStones(board, AB, 1)
-      board = addStones(board, AW, -1)
 
       return {
         initialBoard: board,
         initialBoardState: board.signMap as (0 | 1 | -1)[][],
         stem,
-        initialGameTree: rootNode
+        initialGameTree: rootNode,
+        boardSize: SZ,
+        markerMap
       }
     } catch (error) {
       console.error('SGF解析错误:', error)
@@ -112,15 +160,22 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
         initialBoard: new Board(createEmptyBoard(SZ)),
         initialBoardState: createEmptyBoard(SZ),
         stem: '请在棋盘上落子',
-        initialGameTree: { data: {}, children: [] }
+        initialGameTree: { data: {}, children: [] },
+        boardSize: SZ,
+        markerMap: Array(SZ).fill(null).map(() => Array(SZ).fill(null))
       }
     }
   }, [initSgf, resetKey])
+
+  // 棋盘容器和棋子大小，与 TextChoiceProblem 保持一致
+  const BOARD_CONTAINER_SIZE = boardSize === 19 ? 530 : 490
+  const vertexSize = Math.floor((BOARD_CONTAINER_SIZE - (boardSize === 19 ? 60 : 50)) / boardSize)
 
   // 棋盘状态管理
   const [boardInstance, setBoardInstance] = useState<Board>(initialBoard)
   const [boardState, setBoardState] = useState<(0 | 1 | -1)[][]>(initialBoardState)
   const [currentGameTree, setCurrentGameTree] = useState(initialGameTree)
+  const [markerState, setMarkerState] = useState(markerMap)
 
   // 当 solveState 变为 pending 时重置棋盘
   useEffect(() => {
@@ -137,10 +192,11 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setBoardInstance(initialBoard)
     setBoardState(initialBoardState)
     setCurrentGameTree(initialGameTree)
+    setMarkerState(markerMap)
     setProblemState('pending')
     setCurrentPlayer(1)
     setClickCount(0)
-  }, [initSgf, resetKey, initialBoard, initialBoardState, initialGameTree])
+  }, [initSgf, resetKey, initialBoard, initialBoardState, initialGameTree, markerMap])
 
   // 监听 solveState 的变化
   useEffect(() => {
@@ -152,7 +208,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setProblemState(newState)
     onStateChange?.(newState)
   }
-
 
   // 棋盘点击处理
   const handleVertexClick = useCallback((_: unknown, coord: number[]) => {
@@ -253,22 +308,23 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       <audio ref={placeStoneAudioRef} src="/audio/place_stone.mp3" preload="auto" />
       <audio ref={captureAudioRef} src="/audio/capture.mp3" preload="auto" />
 
-      <div className="flex justify-center lg:justify-start">
+      <div className="flex justify-center lg:justify-start lg:flex-[2]">
         <div
           style={{
-            width: '280px',
-            height: '280px',
+            width: `${BOARD_CONTAINER_SIZE}px`,
+            height: `${BOARD_CONTAINER_SIZE}px`,
           }}
         >
           <Goban
-            vertexSize={25}
+            vertexSize={vertexSize}
             signMap={boardState}
+            markerMap={markerState}
             onVertexClick={handleVertexClick}
           />
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col gap-4 min-w-[300px]">
+      <div className="flex-1 flex flex-col gap-6 min-w-[300px]">
         <div className="bg-white rounded-lg shadow p-4">
           <h2 className="text-xl font-bold mb-2">{stem}</h2>
         </div>
