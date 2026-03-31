@@ -50,9 +50,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     }
   }
 
-  // 使用key来强制重置组件
-  const [resetKey, setResetKey] = useState(0)
-
   // 初始化棋盘逻辑
   const { initialBoard, initialBoardState, stem, initialGameTree, boardSize, markerMap } = useMemo(() => {
     try {
@@ -66,7 +63,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
 
       // 直接使用根节点C属性的内容作为题干
       let stem = rootData['C']?.[0] || ''
-      // 清理多余的空白字符
       stem = stem.replace(/\s+/g, ' ').trim()
       if (!stem) {
         stem = '请在棋盘上落子，解决这个死活题。黑先。'
@@ -78,7 +74,7 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
 
       let board = new Board(createEmptyBoard(SZ))
 
-      // 只处理根节点的AB/AW，不处理后续的B/W
+      // 只处理根节点的AB/AW
       const nodeData = rootNode.data
 
       if (nodeData['AB']) {
@@ -139,29 +135,27 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
         markerMap: Array(SZ).fill(null).map(() => Array(SZ).fill(null))
       }
     }
-  }, [initSgf, resetKey])
+  }, [initSgf])
 
-  // 棋盘容器和棋子大小，与 TextChoiceProblem 保持一致
+  // 棋盘容器和棋子大小
   const BOARD_CONTAINER_SIZE = boardSize === 19 ? 530 : 490
   const vertexSize = Math.floor((BOARD_CONTAINER_SIZE - (boardSize === 19 ? 60 : 50)) / boardSize)
 
-  // 棋盘状态管理
+  // 棋盘状态管理 - 使用 key 来强制重置
+  const [resetKey, setResetKey] = useState(0)
   const [boardInstance, setBoardInstance] = useState<Board>(initialBoard)
   const [boardState, setBoardState] = useState<(0 | 1 | -1)[][]>(initialBoardState)
   const [currentGameTree, setCurrentGameTree] = useState(initialGameTree)
   const [markerState, setMarkerState] = useState(markerMap)
 
-  // 当 solveState 变为 pending 时重置棋盘
+  // 当 solveState 变为 pending 时，强制重置整个组件
   useEffect(() => {
-    if (solveState === 'pending') {
+    if (solveState === 'pending' && problemState !== 'pending') {
       setResetKey(k => k + 1)
-      setProblemState('pending')
-      setCurrentPlayer(1)
-      setClickCount(0)
     }
   }, [solveState])
 
-  // 当 initSgf 或 resetKey 变化时重置状态
+  // 当 resetKey 变化时，重置所有状态
   useEffect(() => {
     setBoardInstance(initialBoard)
     setBoardState(initialBoardState)
@@ -170,7 +164,7 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setProblemState('pending')
     setCurrentPlayer(1)
     setClickCount(0)
-  }, [initSgf, resetKey, initialBoard, initialBoardState, initialGameTree, markerMap])
+  }, [resetKey, initialBoard, initialBoardState, initialGameTree, markerMap])
 
   // 监听 solveState 的变化
   useEffect(() => {
@@ -190,7 +184,6 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     }
 
     const [x, y] = coord
-    // 使用类型断言绕过类型检查
     const moveAnalysis = (boardInstance as any).analyzeMove(currentPlayer, [x, y])
     if (moveAnalysis.suicide || moveAnalysis.overwrite) return
 
@@ -245,12 +238,9 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setBoardState(newBoard.signMap as (0 | 1 | -1)[][])
     setCurrentGameTree(nextGameTree)
 
-    // 判断题目状态 - 兼容有PNS和没有PNS的情况
+    // 判断题目状态
     if (nextGameTree.children && nextGameTree.children.length === 0) {
-      // 如果没有子节点了
       if (foundValidMove) {
-        // 如果找到了有效的落子且没有更多子节点，认为是正确的
-        // 或者检查PNS标记
         const hasPnsTrue = nextGameTree.data.PNS &&
           (Array.isArray(nextGameTree.data.PNS)
             ? nextGameTree.data.PNS[0] === 'T'
@@ -267,6 +257,7 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
       setCurrentPlayer(prev => prev === 1 ? -1 : 1)
     }
 
+    // 播放音效
     if (moveAnalysis.capturing) {
       captureControls.play()
     } else {
