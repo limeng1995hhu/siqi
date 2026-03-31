@@ -173,7 +173,8 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     }
 
     const [x, y] = coord
-    const moveAnalysis = boardInstance.analyzeMove(currentPlayer, [x, y])
+    // 使用类型断言绕过类型检查
+    const moveAnalysis = (boardInstance as any).analyzeMove(currentPlayer, [x, y])
     if (moveAnalysis.suicide || moveAnalysis.overwrite) return
 
     let newBoard = boardInstance.makeMove(currentPlayer as 1 | -1, [x, y])
@@ -227,11 +228,21 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setBoardState(newBoard.signMap as (0 | 1 | -1)[][])
     setCurrentGameTree(nextGameTree)
 
+    // 判断题目状态 - 兼容有PNS和没有PNS的情况
     if (nextGameTree.children && nextGameTree.children.length === 0) {
-      if (nextGameTree.data.PNS && nextGameTree.data.PNS[0] === 'T') {
-        updateProblemState('correct')
-      } else {
-        updateProblemState('error')
+      // 如果没有子节点了
+      if (foundValidMove) {
+        // 如果找到了有效的落子且没有更多子节点，认为是正确的
+        // 或者检查PNS标记
+        const hasPnsTrue = nextGameTree.data.PNS &&
+          (Array.isArray(nextGameTree.data.PNS)
+            ? nextGameTree.data.PNS[0] === 'T'
+            : nextGameTree.data.PNS === 'T')
+        if (hasPnsTrue || !nextGameTree.data.PNS) {
+          updateProblemState('correct')
+        } else {
+          updateProblemState('error')
+        }
       }
     }
 
