@@ -93,7 +93,9 @@ export const buildDirectoryTree = (questions: SuchengWeiqiQuestion[]): Directory
 };
 
 export const loadSuchengWeiqiData = async (): Promise<SuchengWeiqiQuestion[]> => {
+  const basePath = import.meta.env.BASE_URL || '/';
   const possiblePaths = [
+    `${basePath}suchengweiqi.csv`.replace(/\/+/g, '/'),
     '/suchengweiqi.csv',
     './suchengweiqi.csv',
     'suchengweiqi.csv',

@@ -270,10 +270,15 @@ const LifeDeathProblem: FC<LifeDeathProblemProps> = ({
     setClickCount(c => c + 1)
   }, [boardInstance, currentPlayer, boardState, onClick, clickCount, currentGameTree, problemState])
 
+  // 音频路径
+  const basePath = import.meta.env.BASE_URL || '/'
+  const placeStoneAudioPath = `${basePath}audio/place_stone.mp3`.replace(/\/+/g, '/')
+  const captureAudioPath = `${basePath}audio/capture.mp3`.replace(/\/+/g, '/')
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-full">
-      <audio ref={placeStoneAudioRef} src="/audio/place_stone.mp3" preload="auto" />
-      <audio ref={captureAudioRef} src="/audio/capture.mp3" preload="auto" />
+      <audio ref={placeStoneAudioRef} src={placeStoneAudioPath} preload="auto" />
+      <audio ref={captureAudioRef} src={captureAudioPath} preload="auto" />
 
       <div className="flex justify-center lg:justify-start lg:flex-[2]">
         <div
