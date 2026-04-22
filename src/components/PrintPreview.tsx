@@ -300,8 +300,8 @@ export const PrintPreview = ({ onBack }: PrintPreviewProps) => {
                 重新抽取
               </button>
               <button
-                className="flex items-center gap-2 px-4 py-2 bg-gray-400 text-white rounded-lg font-bold cursor-not-allowed"
-                title="打印功能开发中"
+                onClick={() => window.print()}
+                className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-bold hover:bg-green-600 transition-colors"
               >
                 <Printer className="w-4 h-4" />
                 打印题目
