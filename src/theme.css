@@ -23,7 +23,7 @@
     display: none !important;
   }
 
-  /* 页面设置 - A4 横向 */
+  /* 页面设置 */
   @page {
     size: A4 portrait;
     margin: 0.5cm;
@@ -41,9 +41,18 @@
     background: white !important;
   }
 
-  /* 确保 SVG 棋盘正确打印 */
-  svg {
+  /* 确保 Goban 棋盘正确打印 */
+  .shudan-goban {
     page-break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* 确保所有 SVG 元素正确打印 */
+  .shudan-goban svg,
+  .shudan-goban img {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
   }
 
   /* 题目卡片不换行 */
@@ -71,5 +80,24 @@
   .print-row {
     page-break-inside: avoid;
     break-inside: avoid;
+  }
+
+  /* Sabaki Goban 打印样式 */
+  .shudan-goban {
+    background-color: #F1B458 !important;
+  }
+
+  .shudan-goban::after {
+    display: none !important;
+  }
+
+  .shudan-stone-image.shudan-sign_1 {
+    background: #222 !important;
+    print-color-adjust: exact !important;
+  }
+
+  .shudan-stone-image.shudan-sign_-1 {
+    background: #eee !important;
+    print-color-adjust: exact !important;
   }
 }

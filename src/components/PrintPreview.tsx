@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { ChevronLeft, Printer, RefreshCw } from 'lucide-react'
 import Sgf from '@sabaki/sgf'
 import Board from '@sabaki/go-board'
-import { PrintGoban } from './PrintGoban'
+import Goban from './Goban'
 import type { SuchengWeiqiQuestion } from '../types'
 import { loadSuchengWeiqiData } from '../lib/suchengweiqiParser'
 
@@ -332,15 +332,17 @@ export const PrintPreview = ({ onBack }: PrintPreviewProps) => {
                       {globalIdx + 1}.
                     </div>
 
-                    {/* 部分棋盘展示 - 使用打印专用组件，无坐标 */}
-                    <PrintGoban
-                      signMap={pq.boardState}
-                      markerMap={pq.markerMap}
-                      rangeX={pq.rangeX}
-                      rangeY={pq.rangeY}
-                      showCoordinates={false}
-                      boardSize={pq.boardSize}
-                    />
+                    {/* 部分棋盘展示 - 使用 Sabaki Goban 组件 */}
+                    <div style={{ width: '180px', height: '180px' }}>
+                      <Goban
+                        signMap={pq.boardState}
+                        markerMap={pq.markerMap}
+                        rangeX={pq.rangeX}
+                        rangeY={pq.rangeY}
+                        showCoordinates={false}
+                        vertexSize={18}
+                      />
+                    </div>
 
                     {/* 题干展示在棋盘底部 */}
                     <div className="mt-2 text-xs text-gray-600 text-center min-h-[2.5em] leading-tight">
