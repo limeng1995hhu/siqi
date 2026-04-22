@@ -85,19 +85,67 @@
   /* Sabaki Goban 打印样式 */
   .shudan-goban {
     background-color: #F1B458 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .shudan-goban::after {
     display: none !important;
   }
 
-  .shudan-stone-image.shudan-sign_1 {
-    background: #222 !important;
+  /* 棋盘格线 */
+  .shudan-gridline {
+    stroke: #5E2E0C !important;
+  }
+
+  /* 星位 */
+  .shudan-hoshi {
+    fill: #5E2E0C !important;
+  }
+
+  /* 棋子 - 覆盖背景图片，使用纯 CSS 圆形 */
+  .shudan-vertex .shudan-stone {
+    background-image: none !important;
+    background: none !important;
+  }
+
+  /* 黑棋棋子 */
+  .shudan-vertex.shudan-sign_1 .shudan-stone::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 4% !important;
+    left: 4% !important;
+    width: 92% !important;
+    height: 92% !important;
+    border-radius: 50% !important;
+    background: linear-gradient(145deg, #444444, #111111) !important;
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.5) !important;
+    -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  .shudan-stone-image.shudan-sign_-1 {
-    background: #eee !important;
+  /* 白棋棋子 */
+  .shudan-vertex.shudan-sign_-1 .shudan-stone::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 4% !important;
+    left: 4% !important;
+    width: 92% !important;
+    height: 92% !important;
+    border-radius: 50% !important;
+    background: linear-gradient(145deg, #ffffff, #cccccc) !important;
+    box-shadow: 1px 2px 4px rgba(0, 0, 0, 0.3) !important;
+    -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
+  }
+
+  /* 隐藏阴影元素 */
+  .shudan-vertex .shudan-shadow {
+    display: none !important;
+  }
+
+  /* 标签标记 */
+  .shudan-vertex.shudan-marker_label .shudan-marker {
+    font-weight: bold !important;
   }
 }
