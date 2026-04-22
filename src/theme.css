@@ -4,3 +4,72 @@
   --star-color: #E00;
   --stone-size: 22px;
 }
+
+/* 打印样式 */
+@media print {
+  /* 隐藏顶部导航栏 */
+  .sticky.top-0,
+  [class*="sticky"] {
+    display: none !important;
+  }
+
+  /* 隐藏按钮 */
+  button {
+    display: none !important;
+  }
+
+  /* 隐藏音频元素 */
+  audio {
+    display: none !important;
+  }
+
+  /* 页面设置 - A4 横向 */
+  @page {
+    size: A4 portrait;
+    margin: 0.5cm;
+  }
+
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    background: white !important;
+  }
+
+  /* 隐藏背景渐变 */
+  .min-h-screen {
+    min-height: auto !important;
+    background: white !important;
+  }
+
+  /* 确保 SVG 棋盘正确打印 */
+  svg {
+    page-break-inside: avoid;
+  }
+
+  /* 题目卡片不换行 */
+  .print-question-card {
+    page-break-inside: avoid;
+    border: 1px solid #ddd;
+  }
+
+  /* 隐藏非打印内容 */
+  .print-hide {
+    display: none !important;
+  }
+
+  /* 网格布局打印支持 */
+  .grid {
+    display: grid !important;
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.5cm !important;
+  }
+
+  /* 确保每行完整显示 */
+  .print-row {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+}

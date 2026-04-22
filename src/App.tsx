@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Upload, FileText, Trophy, BookOpen } from 'lucide-react'
+import { Upload, FileText, Trophy, BookOpen, Printer } from 'lucide-react'
 import { ParsedQuestion, ProblemState, SuchengWeiqiSession } from './types'
 import { parseCSV, generateSampleCSV } from './lib/csvParser'
 import { playSound } from './lib/audio'
@@ -11,10 +11,11 @@ import { ResultCard } from './components/ResultCard'
 import TextChoiceProblem from './components/TextChoiceProblem'
 import { SuchengWeiqiBrowser } from './components/SuchengWeiqiBrowser'
 import LifeDeathProblem from './components/LifeDeathProblem'
+import { PrintPreview } from './components/PrintPreview'
 
 const MAX_HEARTS = 5
 
-type ViewMode = 'home' | 'quiz' | 'suchengweiqi' | 'suchengweiqi-quiz'
+type ViewMode = 'home' | 'quiz' | 'suchengweiqi' | 'suchengweiqi-quiz' | 'print-preview'
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('home')
@@ -117,6 +118,10 @@ function App() {
     setViewMode('suchengweiqi')
   }
 
+  const enterPrintPreview = () => {
+    setViewMode('print-preview')
+  }
+
   const handleSelectSuchengSession = (session: SuchengWeiqiSession) => {
     setSuchengSession(session)
     setViewMode('suchengweiqi-quiz')
@@ -214,6 +219,11 @@ function App() {
     } else if (suchengStatus === 'correct') {
       onSuchengNext()
     }
+  }
+
+  // 打印预览模式
+  if (viewMode === 'print-preview') {
+    return <PrintPreview onBack={exitToHome} />
   }
 
   // 速成围棋套题模式 - 题目列表
@@ -317,6 +327,14 @@ function App() {
             >
               <BookOpen className="w-5 h-5" />
               速成围棋题库
+            </button>
+
+            <button
+              onClick={enterPrintPreview}
+              className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-purple-500 text-white rounded-xl font-bold hover:bg-purple-600 transition-colors border-b-4 border-purple-600 active:border-b-0"
+            >
+              <Printer className="w-5 h-5" />
+              打印题目
             </button>
 
             <div className="relative">
